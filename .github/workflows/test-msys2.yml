@@ -8,6 +8,7 @@ name: Test setup-msys2 vs install predefined
 env:
   cmake-update: true
   msystem: mingw64
+  mingwr-package-prefix: mingw-w64-x86_64
 
 on:  # yamllint disable-line rule:truthy
   push:
@@ -77,10 +78,14 @@ jobs:
         id: msys2
         with:
           msystem: ${{ env.msystem }}
-          pacboy: >-
-            binutils:p
-            make:p
-            cmake:p
+          install: >-
+            ${{ mingw-w64-x86_64 }}-binutils
+            ${{ mingw-w64-x86_64 }}-make
+            ${{ mingw-w64-x86_64 }}-cmake
+          # pacboy: >-
+          #   binutils:p
+          #   make:p
+          #   cmake:p
 
       - name: Path to setup-msys2
         shell: pwsh
