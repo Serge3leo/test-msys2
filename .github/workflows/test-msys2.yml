@@ -6,6 +6,7 @@
 name: Test setup-msys2 vs install predefined
 
 env:
+  cmake-update: true
   msystem: mingw64
 
 on:  # yamllint disable-line rule:truthy
@@ -28,7 +29,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: MSYS2 PATH
-        if: ${{ 'skip' != inputs.msystem }}
+        if: ${{ 'skip' != env.msystem }}
         shell: pwsh
         run: |
           $base = "C:\msys64"
@@ -50,11 +51,11 @@ jobs:
       - name: Install MSYS make, ar, etc
         shell: pwsh
         run: |
-          if ("skip" -ne "${{ inputs.msystem }}") {
+          if ("skip" -ne "${{ env.msystem }}") {
             pacman -S --noconfirm "$env:MINGW_PACKAGE_PREFIX-binutils" `
                                   "$env:MINGW_PACKAGE_PREFIX-make"
           }
-          if ($${{ fromJSON(inputs.cmake-update) }}) {
+          if ($${{ fromJSON(env.cmake-update) }}) {
             choco install --yes --no-progress cmake
           }
 
