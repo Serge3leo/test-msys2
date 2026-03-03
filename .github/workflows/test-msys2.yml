@@ -79,9 +79,9 @@ jobs:
         with:
           msystem: ${{ env.msystem }}
           install: >-
-            ${{ mingwr-package-prefix }}-binutils
-            ${{ mingwr-package-prefix }}-make
-            ${{ mingwr-package-prefix }}-cmake
+            ${{ env.mingwr-package-prefix }}-binutils
+            ${{ env.mingwr-package-prefix }}-make
+            ${{ env.mingwr-package-prefix }}-cmake
           # pacboy: >-
           #   binutils:p
           #   make:p
