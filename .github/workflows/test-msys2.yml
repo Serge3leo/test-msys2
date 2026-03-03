@@ -1,0 +1,101 @@
+---
+# vim:set sw=2 ts=8 et fileencoding=utf8:
+# SPDX-License-Identifier: BSD-2-Clause
+# SPDX-FileCopyrightText: 2026 Сергей Леонтьев (leo@sai.msu.ru)
+
+name: Test setup-msys2 vs install predefined
+
+env:
+  msystem: mingw64
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [windows-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: MSYS2 PATH
+        if: ${{ 'skip' != inputs.msystem }}
+        shell: pwsh
+        run: |
+          $base = "C:\msys64"
+          $msys = "${{ env.msystem }}".ToLower()
+          "MSYSTEM=" + $msys.ToUpper() `
+            | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MINGW_PACKAGE_PREFIX=" + `
+            ("mingw64" -eq $msys ? "mingw-w64-x86_64" `
+            :"ucrt64" -eq $msys ? "mingw-w64-ucrt-x86_64" `
+            :"clang64" -eq $msys ? "mingw-w64-clang-x86_64" `
+            :"mingw32" -eq $msys ? "mingw-w64-i686" `
+            :"clang32" -eq $msys ? "mingw-w64-clang-i686" `
+            :"clangarm64" -eq $msys ? "mingw-w64-clang-aarch64" `
+            : "") `
+            | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$base\$msys\bin`n$base\usr\bin`n" `
+            | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install MSYS make, ar, etc
+        shell: pwsh
+        run: |
+          if ("skip" -ne "${{ inputs.msystem }}") {
+            pacman -S --noconfirm "$env:MINGW_PACKAGE_PREFIX-binutils" `
+                                  "$env:MINGW_PACKAGE_PREFIX-make"
+          }
+          if ($${{ fromJSON(inputs.cmake-update) }}) {
+            choco install --yes --no-progress cmake
+          }
+
+      - name: Show version
+        shell: pwsh
+        run: |
+          "PATH=$env:PATH"
+          "---"
+          foreach ($prg in 'ar', 'make', 'cmake') {
+            try {
+              get-command $prg
+              &$prg --version | Select-Object -First 1
+            } catch {}
+          }
+
+      - name: Test setup-msys2
+        uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: ${{ env.msystem }}
+          pacboy: >-
+            binutils:p
+            make:p
+            cmake:p
+
+      - name: Path to setup-msys2
+        shell: pwsh
+        run: |
+          $base = "${{ steps.msys2.outputs.msys2-location }}"
+          $msys = "${{ env.msystem }}".ToLower()
+          "$base\$msys\bin`n$base\usr\bin`n" `
+            | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Show version setup-msys2
+        shell: pwsh
+        run: |
+          "PATH=$env:PATH"
+          "---"
+          foreach ($prg in 'ar', 'make', 'cmake') {
+            try {
+              get-command $prg
+              &$prg --version | Select-Object -First 1
+            } catch {}
+          }
