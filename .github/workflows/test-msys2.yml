@@ -45,7 +45,7 @@ jobs:
             :"clangarm64" -eq $msys ? "mingw-w64-clang-aarch64" `
             : "") `
             | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "$base\$msys\bin`n$base\usr\bin`n" `
+          "$base\usr\bin`n$base\$msys\bin`n" `
             | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install MSYS make, ar, etc
@@ -70,6 +70,7 @@ jobs:
               &$prg --version | Select-Object -First 1
             } catch {}
           }
+          cmake --help
 
       - name: Test setup-msys2
         uses: msys2/setup-msys2@v2
@@ -86,7 +87,7 @@ jobs:
         run: |
           $base = "${{ steps.msys2.outputs.msys2-location }}"
           $msys = "${{ env.msystem }}".ToLower()
-          "$base\$msys\bin`n$base\usr\bin`n" `
+          "$base\usr\bin`n$base\$msys\bin`n" `
             | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Show version setup-msys2
@@ -100,3 +101,4 @@ jobs:
               &$prg --version | Select-Object -First 1
             } catch {}
           }
+          cmake --help
